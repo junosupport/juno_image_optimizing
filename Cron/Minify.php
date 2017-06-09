@@ -1,6 +1,6 @@
 <?php
 /**
- * Author: Hieu Nguyen
+ * @Author: Hieu Nguyen <hieu@junowebdesign.com>
  */
 
 namespace Juno\Minify\Cron;
@@ -9,7 +9,7 @@ use \Psr\Log\LoggerInterface;
 use \Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use \Magento\Store\Model\StoreManagerInterface;
-use \RecursiveDirectoryIterator;
+use \Magento\Store\Model\ScopeInterface;
 
 class Minify
 {
@@ -20,8 +20,7 @@ class Minify
         ScopeConfigInterface $config,
         DirectoryList $directoryList,
         StoreManagerInterface $storeManager
-    )
-    {
+    ) {
         $this->logger = $logger;
         $this->scopeConfig = $config;
         $this->directoryList = $directoryList;
@@ -37,14 +36,13 @@ class Minify
 
     public function execute()
     {
-        $enable = $this->scopeConfig->getValue('juno/general/enable', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-        if (!$enable) return;
-        if (!$this->validateServer()) return;
+        $enable = $this->scopeConfig->getValue('juno/general/enable', ScopeInterface::SCOPE_STORE);
+        if (!$enable || !$this->validateServer()) {
+            return;
+        }
 
-        $imageFolder = $this->scopeConfig->getValue('juno/general/image_folder', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
-
+        $imageFolder = $this->scopeConfig->getValue('juno/general/image_folder', ScopeInterface::SCOPE_STORE);
         $imageFolder = explode(';', $imageFolder);
-
         foreach ($imageFolder as $folder) {
             $folder = $this->directoryList->getRoot() . '/' . $folder;
             $this->optimizeImage($folder);
@@ -59,7 +57,7 @@ class Minify
      */
     public function validateServer()
     {
-        $server = $this->scopeConfig->getValue('juno/general/server', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $server = $this->scopeConfig->getValue('juno/general/server', ScopeInterface::SCOPE_STORE);
 
         if (file_get_contents('http://' . $server) == 'ok') {
             return true;
@@ -70,11 +68,13 @@ class Minify
     /**
      * start optimize image found under $mediaPath
      *
-     * @param $mediaPath
+     * @param $mediaPath string
      */
     function optimizeImage($mediaPath)
     {
-        if (!file_exists($mediaPath)) return;
+        if (!file_exists($mediaPath)) {
+            return;
+        }
         $directory = new \RecursiveDirectoryIterator($mediaPath);
         $iterator = new \RecursiveIteratorIterator($directory);
         $files = new \RegexIterator($iterator, '/^.+\.(jpg)$/i', \RecursiveRegexIterator::GET_MATCH);
@@ -93,22 +93,22 @@ class Minify
     /**
      * get image url of the image
      *
-     * @param $imagePath
+     * @param $imagePath string
      * @return mixed
      */
-    function getImageUrl($imagePath)
+    public function getImageUrl($imagePath)
     {
         $siteUrl = $this->_storeManager->getStore()->getBaseUrl();
         return str_replace($this->directoryList->getRoot() . '/', $siteUrl, $imagePath);
     }
 
     /**
-     * @param $imageUrl
+     * @param $imageUrl string
      * @return string
      */
-    function getOptimizeImageUrl($imageUrl)
+    public function getOptimizeImageUrl($imageUrl)
     {
-        $server = $this->scopeConfig->getValue('juno/general/server', \Magento\Store\Model\ScopeInterface::SCOPE_STORE);
+        $server = $this->scopeConfig->getValue('juno/general/server', ScopeInterface::SCOPE_STORE);
         return 'http://' . $server . '/?img=' . $imageUrl;
     }
 }

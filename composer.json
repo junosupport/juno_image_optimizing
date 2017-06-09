@@ -1,5 +1,5 @@
 {
-    "name": "juno/image_minify",
+    "name": "juno/m2-module-imageminify",
     "description": "",
     "require": {
         "php": "~5.5.0|~5.6.0|~7.0.0",
