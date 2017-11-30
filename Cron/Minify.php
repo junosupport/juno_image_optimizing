@@ -99,7 +99,7 @@ class Minify
     public function getImageUrl($imagePath)
     {
         $siteUrl = $this->_storeManager->getStore()->getBaseUrl();
-        return str_replace($this->directoryList->getRoot() . '/', $siteUrl, $imagePath);
+        return str_replace($this->directoryList->getRoot() . '/', $siteUrl, str_replace('/pub', '', $imagePath));
     }
 
     /**
